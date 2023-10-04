@@ -1,0 +1,77 @@
+name: Deploy Terraform
+
+on:
+  push:
+    branches:
+      - develop
+      - release-test
+      - master
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID_DEV: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+      AWS_SECRET_ACCESS_KEY_DEV: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+      AWS_ACCESS_KEY_ID_TEST: ${{ secrets.AWS_ACCESS_KEY_ID_TEST }}
+      AWS_SECRET_ACCESS_KEY_TEST: ${{ secrets.AWS_SECRET_ACCESS_KEY_TEST }}
+      AWS_ACCESS_KEY_ID_PROD: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+      AWS_SECRET_ACCESS_KEY_PROD: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set AWS credentials (based on branch)
+        run: |
+          if [ ${{ github.ref }} == 'refs/heads/develop' ]; then
+            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_DEV
+            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_DEV
+          elif [ ${{ github.ref }} == 'refs/heads/release-test' ]; then
+            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST
+            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST
+          elif [ ${{ github.ref }} == 'refs/heads/master' ]; then
+            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_PROD
+            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_PROD
+          else
+            echo "No matching environment for this branch."
+            exit 1
+          fi
+
+      - name: Initialize Terraform
+        run: terraform init
+
+      - name: Plan Terraform
+        run: terraform plan -out=tfplan
+
+  deploy:
+    needs: plan
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID_DEV: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+      AWS_SECRET_ACCESS_KEY_DEV: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+      AWS_ACCESS_KEY_ID_TEST: ${{ secrets.AWS_ACCESS_KEY_ID_TEST }}
+      AWS_SECRET_ACCESS_KEY_TEST: ${{ secrets.AWS_SECRET_ACCESS_KEY_TEST }}
+      AWS_ACCESS_KEY_ID_PROD: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+      AWS_SECRET_ACCESS_KEY_PROD: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
+    steps:
+      - name: Set AWS credentials (based on branch)
+        run: |
+          if [ ${{ github.ref }} == 'refs/heads/develop' ]; then
+            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_DEV
+            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_DEV
+          elif [ ${{ github.ref }} == 'refs/heads/release-test' ]; then
+            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST
+            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST
+          elif [ ${{ github.ref }} == 'refs/heads/master' ]; then
+            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_PROD
+            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_PROD
+          else
+            echo "No matching environment for this branch."
+            exit 1
+          fi
+
+      - name: Apply Terraform (based on branch)
+        if: ${{ github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release-test' || github.ref == 'refs/heads/master' }}
+        run: terraform apply -auto-approve tfplan
