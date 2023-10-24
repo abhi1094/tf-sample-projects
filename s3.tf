@@ -37,3 +37,6 @@ resource "aws_s3_bucket_public_access_block" "access_block" {
   ignore_public_acls  = true
   restrict_public_buckets = true
 }
+
+
+https://a5d29dec09bcb4bf1964475be829cf92-1924209159.eu-west-1.elb.amazonaws.com/
