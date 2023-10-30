@@ -1,0 +1,24 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+    commands:
+      - echo "Install any prerequisites here"
+
+  pre_build:
+    commands:
+      - echo "Initialize and validate Terraform"
+      - terraform --version
+      - terraform init -input=false
+
+  build:
+    commands:
+      - echo "Plan Terraform changes"
+      - terraform plan -out=tfplan -input=false
+
+  post_build:
+    commands:
+      - echo "Apply Terraform changes"
+      - terraform apply -input=false -auto-approve tfplan
