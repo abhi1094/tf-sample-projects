@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Creating temporary .tfvars file"
+      - |
+        cat <<EOF > temp.tfvars
+        variable_name = "variable_value"
+        another_variable = "another_value"
+        yet_another_variable = "yet_another_value"
+        EOF
+      - echo "Initialize and validate Terraform"
+      - terraform --version
+      - terraform init -input=false
+
+  build:
+    commands:
+      - echo "Plan Terraform changes with .tfvars file"
+      - terraform plan -var-file=temp.tfvars -out=tfplan -input=false
+
+  post_build:
+    commands:
+      - echo "Apply Terraform changes with .tfvars file"
+      - terraform apply -var-file=temp.tfvars -input=false -auto-approve tfplan
+      - echo "Cleanup"
+      - rm -f temp.tfvars
