@@ -38,5 +38,49 @@ resource "aws_s3_bucket_public_access_block" "access_block" {
   restrict_public_buckets = true
 }
 
+provider "aws" {
+ region = "us-west-2"
+}
+
+resource "aws_s3_bucket" "example" {
+ bucket = "my-example-bucket"
+
+ versioning {
+    enabled = true
+ }
+
+ server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "AES256"
+      }
+    }
+ }
+}
+
+resource "aws_s3_bucket_policy" "example" {
+ bucket = aws_s3_bucket.example.id
+
+ policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "IPAllow"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.example.arn,
+          "${aws_s3_bucket.example.arn}/*",
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      },
+    ]
+ })
+}
 
 https://a5d29dec09bcb4bf1964475be829cf92-1924209159.eu-west-1.elb.amazonaws.com/
