@@ -1,0 +1,34 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:*",
+        "eks:*",
+        "elasticfilesystem:*",
+        "rds:*",
+        "s3:*",
+        "lambda:*",
+        "cognito:*",
+        "iam:PassRole",
+        "iam:GetRole",
+        "iam:ListRoles",
+        "apprunner:*",
+        "cloudtrail:*",
+        "cloudwatch:*",
+        "events:*",
+        "mq:*",
+        "directconnect:*",
+        "privatelink:*",
+        "transitgateway:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::*:role/TerraformRole"
+    }
+  ]
+}
