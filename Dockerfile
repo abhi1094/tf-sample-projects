@@ -1,19 +1,19 @@
-# Use a Windows base image
+# Use the official Windows Server Core image
 FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
+# Set the working directory
+WORKDIR C:\app
+
+# Copy the executable file to the container
+COPY your_executable_file.exe .
+
 # Install OpenSSH
-RUN powershell -Command \
-    Add-WindowsFeature SSH-Server; \
-    New-ItemProperty -Path HKLM:\SOFTWARE\OpenSSH -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force; \
-    Start-Service sshd
+RUN powershell -Command Add-WindowsFeature OpenSSH.Server
 
-# Create an SFTP user
-RUN powershell -Command \
-    New-LocalUser -Name "sftpuser" -Password (ConvertTo-SecureString -AsPlainText "sftppassword" -Force) -FullName "SFTP User" -Description "SFTP User"; \
-    net localgroup administrators sftpuser /add
-
-# Expose SFTP port
+# Expose the SSH port (default is 22)
 EXPOSE 22
 
-# Start SSHD
-CMD [ "sshd", "-D" ]
+# Start the SSH server when the container starts
+CMD ["C:\\Windows\\System32\\OpenSSH\\sshd.exe", "-D"]
+
+# CMD ["your_executable_file.exe"]  # Uncomment this line if you want to start your executable instead of the SSH server
