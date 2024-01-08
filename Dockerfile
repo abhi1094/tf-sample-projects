@@ -1,12 +1,15 @@
 # Use the official Windows Server Core image
 FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
-# Download and install WinSSHD (adjust the version URL as needed)
-ADD https://www.bitvise.com/ssh-server-download/bitvise-ssh-server-8.48-x64-installer.exe C:\\bitvise-installer.exe
-RUN Start-Process -Wait -FilePath C:\\bitvise-installer.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+# Download and install OpenSSH (adjust the version URL as needed)
+ADD https://github.com/PowerShell/Win32-OpenSSH/releases/download/V8.1.0.0p1-Beta/OpenSSH-Win64.zip C:\\OpenSSH.zip
+RUN Expand-Archive -Path C:\\OpenSSH.zip -DestinationPath C:\\OpenSSH ; \
+    Move-Item -Path C:\\OpenSSH\\OpenSSH-Win64 -Destination C:\\OpenSSH ; \
+    Remove-Item C:\\OpenSSH.zip -Force ; \
+    Remove-Item -Recurse -Force C:\\OpenSSH\\*.pdf
 
 # Expose the SFTP port
 EXPOSE 22
 
-# Command to start the WinSSHD service
-CMD ["C:\\Program Files (x86)\\Bitvise SSH Server\\BssCtrl.exe", "/START"]
+# Start the SSHD service
+CMD ["C:\\OpenSSH\\sshd.exe", "-D"]
