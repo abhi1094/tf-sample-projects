@@ -1,29 +1,17 @@
 version: 0.2
 
 phases:
-  install:
-    runtime-versions:
-      python: 3.7
-    commands:
-      - echo "Install Terraform"
-      - curl -o terraform.zip https://releases.hashicorp.com/terraform/0.14.11/terraform_0.14.11_linux_amd64.zip
-      - unzip terraform.zip
-      - chmod +x terraform
-      - mv terraform /usr/local/bin/
-      - rm terraform.zip
-
   pre_build:
     commands:
-      - echo "Initialize and validate Terraform"
-      - terraform --version
-      - terraform init -input=false
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
   build:
     commands:
-      - echo "Plan Terraform changes"
-      - terraform plan -out=tfplan -input=false
+      - echo Build started on `date`
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker push $REPOSITORY_URI:latest
 
-  post_build:
-    commands:
-      - echo "Apply Terraform changes"
-      - terraform apply -input=false -auto-approve tfplan
+post_build:
+  commands:
+    - echo Build completed on `date`
