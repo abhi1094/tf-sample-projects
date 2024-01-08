@@ -1,19 +1,12 @@
 # Use the official Windows Server Core image
 FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
-# Set the working directory
-WORKDIR C:\app
+# Download and install WinSSHD (adjust the version URL as needed)
+ADD https://www.bitvise.com/ssh-server-download/bitvise-ssh-server-8.48-x64-installer.exe C:\\bitvise-installer.exe
+RUN Start-Process -Wait -FilePath C:\\bitvise-installer.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
 
-# Copy the executable file to the container
-COPY your_executable_file.exe .
-
-# Install OpenSSH
-RUN powershell -Command Add-WindowsFeature OpenSSH.Server
-
-# Expose the SSH port (default is 22)
+# Expose the SFTP port
 EXPOSE 22
 
-# Start the SSH server when the container starts
-CMD ["C:\\Windows\\System32\\OpenSSH\\sshd.exe", "-D"]
-
-# CMD ["your_executable_file.exe"]  # Uncomment this line if you want to start your executable instead of the SSH server
+# Command to start the WinSSHD service
+CMD ["C:\\Program Files (x86)\\Bitvise SSH Server\\BssCtrl.exe", "/START"]
