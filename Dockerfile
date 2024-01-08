@@ -1,11 +1,17 @@
-# Use the official Windows Server Core image
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
+# Use a Linux image for initial steps
+FROM alpine:latest AS downloader
 
-# Download and install OpenSSH
-ADD https://github.com/PowerShell/Win32-OpenSSH/releases/download/8.1.0.0p1-Beta/OpenSSH-Win64.zip C:\\OpenSSH.zip
+# Download the OpenSSH zip
+ADD https://github.com/PowerShell/Win32-OpenSSH/releases/download/8.1.0.0p1-Beta/OpenSSH-Win64.zip /tmp/OpenSSH.zip
+
+# Use a Windows image for Windows-specific steps
+FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
 # Create a directory for OpenSSH
 RUN mkdir C:\OpenSSH
+
+# Copy files from the downloader stage
+COPY --from=downloader /tmp/OpenSSH.zip /OpenSSH.zip
 
 # Set the working directory
 WORKDIR C:\
@@ -18,9 +24,6 @@ RUN powershell -Command Expand-Archive -Path C:\OpenSSH.zip -DestinationPath C:\
 
 # Expose the SFTP port
 EXPOSE 22
-
-# Display contents of the OpenSSH directory for debugging
-RUN Get-ChildItem -Path C:\OpenSSH -Recurse
 
 # Start the SSHD service
 CMD ["C:\\OpenSSH\\sshd.exe", "-D"]
