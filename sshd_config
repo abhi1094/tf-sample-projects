@@ -1,0 +1,4 @@
+Match Group sftp
+  ChrootDirectory C:\\sftp
+  ForceCommand internal-sftp
+  AllowTcpForwarding no
