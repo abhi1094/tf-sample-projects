@@ -1,29 +1,21 @@
-# Use a Linux image for initial steps
-FROM alpine:latest AS downloader
+# Base image 
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
 
-# Download the OpenSSH zip
-ADD https://github.com/PowerShell/Win32-OpenSSH/releases/download/8.1.0.0p1-Beta/OpenSSH-Win64.zip /tmp/OpenSSH.zip
+# Install OpenSSH Server
+RUN powershell Add-WindowsCapability -Online -Name OpenSSH.Server
 
-# Use a Windows image for Windows-specific steps
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
+# Create user and folder
+RUN powershell "New-LocalUser -Name sftpuser -Description 'SFTP User' -Password (ConvertTo-SecureString -AsPlainText 'pass@123' -Force)" 
+RUN mkdir C:\sftp 
 
-# Create a directory for OpenSSH
-RUN mkdir C:\OpenSSH
+# Copy config 
+COPY sshd_config C:\ProgramData\ssh\sshd_config
 
-# Copy files from the downloader stage
-COPY --from=downloader /tmp/OpenSSH.zip /OpenSSH.zip
+# Open port in firewall
+RUN Set-NetFirewallRule -Name sshd -NewEnabled True
 
-# Set the working directory
-WORKDIR C:\
+# Expose port
+EXPOSE 22 
 
-# Extract the contents of OpenSSH.zip to C:\OpenSSH
-RUN powershell -Command Expand-Archive -Path C:\OpenSSH.zip -DestinationPath C:\OpenSSH ; \
-    Move-Item -Path C:\OpenSSH\OpenSSH-Win64\* -Destination C:\OpenSSH ; \
-    Remove-Item -Path C:\OpenSSH.zip -Force ; \
-    Remove-Item -Path C:\OpenSSH\OpenSSH-Win64 -Recurse -Force
-
-# Expose the SFTP port
-EXPOSE 22
-
-# Start the SSHD service
-CMD ["C:\\OpenSSH\\sshd.exe", "-D"]
+# Run SSHD as entry point
+CMD ["powershell", "Start-Service sshd"]
