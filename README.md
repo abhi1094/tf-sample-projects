@@ -53,3 +53,4 @@ If you'd like to contribute to this project, please follow the contribution guid
 License
 This project is licensed under the MIT License.
 
+give me a public subnet in 10.10.0.0/24 VPC which should collide with 10.10.0.0/26 10.10.0.192/26 10.10.0.128/26 10.10.0.64/26
