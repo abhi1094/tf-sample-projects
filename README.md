@@ -50,6 +50,8 @@ terraform destroy
 Contributing
 If you'd like to contribute to this project, please follow the contribution guidelines.
 
+https://blog.devops.dev/using-pre-commit-hooks-with-terraform-code-5cc14162d490
+
 License
 This project is licensed under the MIT License.
 
