@@ -16,3 +16,9 @@ RUN msiexec /i C:\IBM-MQC-Win64\IBM MQ.msi /l*v C:\IBM-MQC-Win64\install-jre.log
  
 # Cleanup install files
 RUN del C:\IBM-MQC-Win64\IBM MQ.msi /q
+
+
+- name: run pre-commit
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: pre-commit run --all-files -v
