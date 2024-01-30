@@ -52,6 +52,8 @@ If you'd like to contribute to this project, please follow the contribution guid
 
 https://blog.devops.dev/using-pre-commit-hooks-with-terraform-code-5cc14162d490
 
+https://techblog.flaviusdinu.com/github-actions-pipelines-for-terraform-32f1171d18dc
+
 License
 This project is licensed under the MIT License.
 
