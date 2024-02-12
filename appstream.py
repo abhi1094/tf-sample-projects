@@ -75,4 +75,6 @@ output = ssm_client.get_command_invocation(
 print("SSM Command Output:")
 print(output)
 
+"An error occurred (InvalidDocumentContent) when calling the CreateDocument operation: Unknown input names provided. Known=[ [Comment, MaxErrors, Parameters, DocumentHashType, ServiceRoleArn, MaxConcurrency, Targets, TimeoutSeconds, OutputS3KeyPrefix, CloudWatchOutputConfig, NotificationConfig, DocumentVersion, InstanceIds, OutputS3BucketName, DocumentName, DocumentHash] ], Provided=[ [DocumentName, runtimeEnvironment, commands] ].",
+
 An error occurred (InvalidDocumentContent) when calling the CreateDocument operation: Missing required input names. Required=[ [DocumentName] ], Provided =[ [runCommand] ].",
