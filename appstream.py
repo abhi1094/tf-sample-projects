@@ -72,3 +72,5 @@ output = ssm_client.get_command_invocation(
 
 print("SSM Command Output:")
 print(output)
+
+An error occurred (InvalidDocumentContent) when calling the CreateDocument operation: Missing required input names. Required=[ [DocumentName] ], Provided =[ [runCommand] ].",
