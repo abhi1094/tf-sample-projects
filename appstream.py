@@ -20,17 +20,20 @@ image_builder_arn = response['ImageBuilders'][0]['Arn']
 
 # Create an SSM document with commands to copy files from S3 and install applications
 ssm_document_content = {
-    "schemaVersion": "2.2",
+    "schemaVersion": "0.3",
     "description": "Install applications from S3",
+    "assumeRole": "{{ AutomationAssumeRole }}",
     "mainSteps": [
         {
             "action": "aws:runShellScript",
             "name": "installApplications",
-            "inputs": [
-                f"aws s3 cp s3://{s3_bucket_name}/{s3_key_prefix} C:\\InstallationFiles\\ --recursive",
-                "cd C:\\InstallationFiles",
-                "your-installation-command.exe /install /quiet"  # Replace with your actual installation command
-            ]
+            "inputs": {
+                "runCommand": [
+                    f"aws s3 cp s3://{s3_bucket_name}/{s3_key_prefix} C:\\InstallationFiles\\ --recursive",
+                    "cd C:\\InstallationFiles",
+                    "your-installation-command.exe /install /quiet"  # Replace with your actual installation command
+                ]
+            }
         }
     ]
 }
