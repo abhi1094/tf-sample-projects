@@ -25,10 +25,12 @@ ssm_document_content = {
     "assumeRole": "{{ AutomationAssumeRole }}",
     "mainSteps": [
         {
-            "action": "aws:runShellScript",
             "name": "installApplications",
+            "action": "aws:runCommand",
             "inputs": {
-                "runCommand": [
+                "documentName": "AWS-RunShellScript",
+                "runtimeEnvironment": "Windows",
+                "commands": [
                     f"aws s3 cp s3://{s3_bucket_name}/{s3_key_prefix} C:\\InstallationFiles\\ --recursive",
                     "cd C:\\InstallationFiles",
                     "your-installation-command.exe /install /quiet"  # Replace with your actual installation command
