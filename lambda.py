@@ -1,31 +1,34 @@
 import boto3
 import json
 
-def run_ssm_command(instance_id, s3_bucket, s3_prefix):
+def create_custom_document(document_name, content):
     ssm_client = boto3.client('ssm')
 
-    # S3 script location
-    script_path = f"https://s3.amazonaws.com/{s3_bucket}/{s3_prefix}/Create-ChromeVHDX.ps1"
+    try:
+        ssm_client.create_document(
+            Name=document_name,
+            DocumentType='Command',
+            Content=content
+        )
+        print(f"Custom SSM document {document_name} created successfully.")
+        return True
+    except ssm_client.exceptions.DocumentAlreadyExists as e:
+        print(f"Custom SSM document {document_name} already exists.")
+        return True
+    except Exception as e:
+        print(f"Error creating custom SSM document: {e}")
+        return False
 
-    # SSM command parameters
-    ssm_parameters = {
-        "sourceType": ["S3"],
-        "sourceInfo": [{"path": script_path}],
-        "commandLine": [
-            "Create-ChromeVHDX.ps1",
-            "-installSize", "650",
-            "-vhdName", "Chrome",
-            "-vhdS3Bucket", s3_bucket,
-            "-vhdMountPath", "C:\\Program Files\\Google\\",
-            "-force", "$true"
-        ]
-    }
+def run_ssm_command(instance_id, document_name, script_params):
+    ssm_client = boto3.client('ssm')
 
     try:
         response = ssm_client.send_command(
-            DocumentName="AWS-RunRemoteScript",
+            DocumentName=document_name,
             Targets=[{"Key": "instanceids", "Values": [instance_id]}],
-            Parameters=json.dumps(ssm_parameters)
+            Parameters={
+                'commands': [f"<YourScript.ps1 {script_params}>"]
+            }
         )
 
         command_id = response['Command']['CommandId']
@@ -38,11 +41,29 @@ def run_ssm_command(instance_id, s3_bucket, s3_prefix):
 def lambda_handler(event, context):
     # Replace with your actual values
     instance_id = "i-XXXXXXXXXXXXX"
-    s3_bucket = "BUCKET-NAME"
-    s3_prefix = "PREFIX"
+    document_name = "MyPowerShellScriptDocument"
+    script_params = "-Param1 Value1 -Param2 Value2"
+
+    # Create custom SSM document
+    document_content = """
+    {
+      "schemaVersion": "2.2",
+      "description": "Custom PowerShell script execution document",
+      "mainSteps": [
+        {
+          "action": "aws:runPowerShellScript",
+          "name": "runPowerShellScript",
+          "inputs": {
+            "runCommand": ["<YourScript.ps1>"]
+          }
+        }
+      ]
+    }
+    """
+    create_custom_document(document_name, document_content)
 
     # Run SSM command
-    command_id = run_ssm_command(instance_id, s3_bucket, s3_prefix)
+    command_id = run_ssm_command(instance_id, document_name, script_params)
 
     if command_id:
         # Proceed with other tasks
