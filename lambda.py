@@ -1,4 +1,19 @@
 import boto3
+from botocore.exceptions import WaiterError
+
+def wait_until_command_executed(ssm_client, command_id):
+    try:
+        ssm_client.get_command_invocation(
+            CommandId=command_id,
+            InstanceId=instance_id,
+            PluginName="aws:runPowerShellScript"
+        )
+    except ssm_client.exceptions.InvocationDoesNotExist as e:
+        raise WaiterError(
+            name="SSMCommandExecuted",
+            reason="SSM command execution failed.",
+            last_response=None
+        ) from e
 
 def run_ssm_command(instance_id, s3_bucket, s3_prefix):
     ssm_client = boto3.client('ssm')
@@ -26,9 +41,21 @@ def run_ssm_command(instance_id, s3_bucket, s3_prefix):
 
         command_id = response['Command']['CommandId']
         print(f"SSM Command sent successfully. Command ID: {command_id}")
+
+        # Wait until the SSM command execution is complete
+        ssm_client.get_waiter('SSMCommandExecuted').wait(
+            CommandId=command_id,
+            InstanceId=instance_id,
+            WaiterConfig={
+                'Delay': 30,  # Wait 30 seconds between attempts
+                'MaxAttempts': 60  # Retry for a maximum of 30 minutes
+            }
+        )
+
+        print(f"SSM Command execution completed. Command ID: {command_id}")
         return command_id
     except ssm_client.exceptions.ClientError as e:
-        print(f"Error sending SSM command: {e}")
+        print(f"Error sending or waiting for SSM command: {e}")
         return None
 
 def lambda_handler(event, context):
@@ -40,7 +67,13 @@ def lambda_handler(event, context):
     # Run SSM command
     command_id = run_ssm_command(instance_id, s3_bucket, s3_prefix)
 
+    if command_id:
+        # Proceed with other tasks
+        print("Other tasks can be performed now.")
+    else:
+        print("Error occurred during SSM command execution.")
+
     return {
         'statusCode': 200,
-        'body': f'SSM Command sent. Command ID: {command_id}'
+        'body': f'SSM Command sent and completed. Command ID: {command_id}'
     }
