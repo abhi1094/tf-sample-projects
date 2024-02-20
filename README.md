@@ -54,6 +54,15 @@ https://blog.devops.dev/using-pre-commit-hooks-with-terraform-code-5cc14162d490
 
 https://techblog.flaviusdinu.com/github-actions-pipelines-for-terraform-32f1171d18dc
 
+aws ssm send-command \
+
+--document-name "AWS-RunRemoteScript" \
+
+--targets "Key=instanceids,Values=i-XXXXXXXXXXXXX" \
+
+--parameters '{"sourceType":["S3"],"sourceInfo":["{\"path\":\"https://s3.amazonaws.com/BUCKET-NAME/PREFIX/Create-ChromeVHDX.ps1\"}"],"commandLine":["Create-ChromeVHDX.ps1 -installSize 650 -vhdName Chrome -vhdS3Bucket BUCKET-NAME -vhdMountPath \"C:\\Program Files\\Google\\\" -force $true"]}'
+
+
 License
 This project is licensed under the MIT License.
 
