@@ -1,0 +1,57 @@
+import json
+import boto3
+import base64
+from datetime import datetime, timedelta
+
+sns = boto3.client('sns')
+sns_topic_arn = os.getenv('SNS_TOPIC_ARN')
+
+def lambda_handler(event, context):
+    exceeded_containers = {}
+    for record in event['Records']:
+        payload = base64.b64decode(record['kinesis']['data'])
+        log_event = json.loads(payload)
+        message = json.loads(log_event['message'])
+        
+        MemoryUtilized = message.get('MemoryUtilized', 0)
+        MemoryReserved = message.get('MemoryReserved', 1)  # Avoid division by zero
+        containerId = message.get('containerId')
+        ServiceName = message.get('ServiceName')
+        ClusterName = message.get('ClusterName')
+        
+        memory_utilization_percentage = (MemoryUtilized / MemoryReserved) * 100
+        if memory_utilization_percentage > 80:
+            if containerId not in exceeded_containers:
+                exceeded_containers[containerId] = {
+                    "count": 1,
+                    "ServiceName": ServiceName,
+                    "ClusterName": ClusterName,
+                    "MemoryUtilizationPercentage": memory_utilization_percentage
+                }
+            else:
+                exceeded_containers[containerId]["count"] += 1
+
+    alert_containers = [
+        container for container, data in exceeded_containers.items()
+        if data["count"] >= 5
+    ]
+    
+    if alert_containers:
+        message = "Containers exceeding 80% memory utilization for 5 minutes:\n"
+        for container in alert_containers:
+            data = exceeded_containers[container]
+            message += (f"ContainerId: {container}, "
+                        f"ServiceName: {data['ServiceName']}, "
+                        f"ClusterName: {data['ClusterName']}, "
+                        f"MemoryUtilizationPercentage: {data['MemoryUtilizationPercentage']}\n")
+        
+        sns.publish(
+            TopicArn=sns_topic_arn,
+            Message=message,
+            Subject="High Memory Utilization Alert"
+        )
+    
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Log data processed')
+    }
